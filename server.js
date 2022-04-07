@@ -1,5 +1,6 @@
 const fastify = require('fastify')({ logger: true });
 const bcrypt = require('bcrypt');
+require('dotenv').config();
 const knex = require('knex')({
   client: 'pg',
   connection: {
@@ -11,9 +12,9 @@ const knex = require('knex')({
   },
 });
 
-const SALT = 10;
+const SALT = process.env.SALT;
 
-const PORT = 5000;
+const PORT = process.env.PORT;
 
 fastify.get('/', async (req, reply) => {
   reply.send({ hi: 'world' });
