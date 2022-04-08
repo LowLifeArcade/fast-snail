@@ -53,20 +53,30 @@ fastify.post('/signup', async (req, reply) => {
 
 fastify.post('/signin', async (req, reply) => {
   const { email, password } = req.body;
-  console.log('EMAIL AND PW: ', email, password);
+
   knex
-    .select('hash')
+    .select('hash', 'email')
     .from('login')
     .where('email', email)
-    .then((hashedpw) => {
-      console.log('HASHEDPW: ', hashedpw[0].hash);
+    .then((data) => {
       bcrypt
-        .compare(password, hashedpw[0].hash)
+        .compare(password, data[0].hash)
         .then((response) => {
-          console.log('hashed pw is: ', response);
-          reply.send('good pw', response);
+          if (!response) return reply.send(new Error('error logging in'));
+          knex
+            .select('*')
+            .from('users')
+            .where('email', data[0].email)
+            .then((user) => {
+              console.log('WHOAMI: ', user);
+              reply.send(user[0]);
+            })
+            .catch((err) => {
+              reply.status(400).send(new Error('WHOAMI ERROR:', err));
+              console.log('WHOAMI ERROR: ', err);
+            });
         })
-        .catch((err) => reply.send(new Error('wrong password')));
+        .catch((err) => reply.status(400).send(new Error('wrong password')));
     })
     .catch((err) => reply.send(new Error('error logging in')));
 });
@@ -89,6 +99,12 @@ fastify.get('/profile/:id', (req, reply) => {
     .catch((err) => {
       reply.status(404).send(new Error('error finding user'));
     });
+});
+
+fastify.get('/posts', async (req, reply) => {
+  knex('posts')
+    .select('*')
+    .then((data) => reply.status(200).send(data));
 });
 
 const start = async () => {
