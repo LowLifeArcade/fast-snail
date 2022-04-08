@@ -13,8 +13,8 @@ const knex = require('knex')({
 });
 
 const SALT = process.env.SALT;
-
 const PORT = process.env.PORT;
+const HOST = process.env.HOST;
 
 fastify.get('/', async (req, reply) => {
   reply.send({ hi: 'world' });
@@ -104,12 +104,20 @@ fastify.get('/profile/:id', (req, reply) => {
 fastify.get('/posts', async (req, reply) => {
   knex('posts')
     .select('*')
-    .then((data) => reply.status(200).send(data));
+    .then((data) => {
+      if (!data.length) reply.status(204).send('Nothing here');
+      reply.status(200).send(data);
+    })
+    .catch((err) => reply.send(new Error('Could not get posts')));
+});
+
+fastify.get('/data', async (req, reply) => {
+  reply.send('hi');
 });
 
 const start = async () => {
   try {
-    await fastify.listen({ port: `${PORT}`, host: '0.0.0.0' });
+    await fastify.listen({ port: `${PORT}`, host: HOST });
   } catch (error) {
     fastify.log.error(error);
     process.exit(1);
